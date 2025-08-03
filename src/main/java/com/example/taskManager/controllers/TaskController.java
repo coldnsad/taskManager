@@ -20,6 +20,6 @@ public class TaskController {
 
     @PostConstruct
     public void init() {
-        System.out.println("appName: " + appName);
+        //System.out.println("appName: " + appName);
     }
 }
