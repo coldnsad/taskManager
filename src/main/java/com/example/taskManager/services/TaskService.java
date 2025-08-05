@@ -1,6 +1,8 @@
 package com.example.taskManager.services;
 
+import com.example.taskManager.dto.TaskDTO;
 import com.example.taskManager.exceptions.TaskNotFoundException;
+import com.example.taskManager.mappers.TaskMapper;
 import com.example.taskManager.models.Task;
 import com.example.taskManager.repositories.TaskRepository;
 import jakarta.annotation.PostConstruct;
@@ -13,49 +15,58 @@ import java.util.List;
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
     private Clock clock;
 
-    public TaskService(Clock clock, TaskRepository taskRepository) {
+    public TaskService(Clock clock, TaskRepository taskRepository, TaskMapper taskMapper) {
         this.clock = clock;
         this.taskRepository = taskRepository;
+        this.taskMapper = taskMapper;
     }
 
     //@Transactional используется для безопасного выполнения операции изменения данных(атомарность)
     @Transactional
-    public Task createTask(Task task){
-       return taskRepository.save(task);
+    public TaskDTO createTask(TaskDTO taskDTO){
+        Task task = taskMapper.taskDTOToTask(taskDTO);
+        Task savedTask = taskRepository.save(task);
+       return taskMapper.taskToTaskDTO(savedTask);
     }
 
-    public Task getTaskById(Long id){
-        return taskRepository.findById(id)
+    public TaskDTO getTaskById(Long id){
+        Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
+        return taskMapper.taskToTaskDTO(task);
     }
 
-    public List<Task> getAllTasks(){
-        return taskRepository.findAll();
+    public List<TaskDTO> getAllTasks(){
+        return taskMapper.tasksToTaskDTOs(taskRepository.findAll());
     }
 
     @Transactional
-    public Task updateTask(Long id, Task updatedTask){
-        Task existingTask = getTaskById(id);
+    public TaskDTO updateTask(Long id, TaskDTO updatedTask){
+        Task existingTask = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException(id));
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
         existingTask.setCompleted(updatedTask.getCompleted());
-        return taskRepository.save(existingTask);
+        Task savedTask = taskRepository.save(existingTask);
+        return taskMapper.taskToTaskDTO(savedTask);
     }
 
     @Transactional
     public void deleteTaskById(Long id){
-        Task taskForDelete = getTaskById(id);
+        Task taskForDelete = taskMapper.taskDTOToTask(getTaskById(id));
         taskRepository.delete(taskForDelete);
     }
 
-    public List<Task> getTasksByCompletionStatus(boolean completed){
-        return taskRepository.findByCompleted(completed);
+    public List<TaskDTO> getTasksByCompletionStatus(boolean completed){
+        List<Task> tasks = taskRepository.findByCompleted(completed);
+        return taskMapper.tasksToTaskDTOs(tasks);
     }
 
-    public List<Task> getTasksByTitleKeyword(String keyword){
-        return taskRepository.findByTitleKeyword(keyword);
+    public List<TaskDTO> getTasksByTitleKeyword(String keyword){
+        List<Task> tasks = taskRepository.findByTitleKeyword(keyword);
+        return taskMapper.tasksToTaskDTOs(tasks);
     }
 
     //Вызов метода происходит после полной инициализации бина
