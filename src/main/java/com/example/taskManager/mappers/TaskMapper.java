@@ -10,7 +10,6 @@ import java.util.List;
 //В данном случае используется mapstruct
 @Mapper(componentModel = "spring")
 public interface TaskMapper {
-    // Маппинг Task -> TaskDTO
     TaskDTO taskToTaskDTO(Task task);
     Task taskDTOToTask(TaskDTO taskDTO);
     List<TaskDTO> tasksToTaskDTOs(List<Task> tasks);
