@@ -1,6 +1,7 @@
 package com.example.taskManager.exceptions;
 
 import com.example.taskManager.dto.ErrorResponseDTO;
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 //Класс для глобальной обработки исключений в проекте
+@Hidden
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

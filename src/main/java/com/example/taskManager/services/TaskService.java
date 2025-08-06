@@ -29,7 +29,9 @@ public class TaskService {
     public TaskDTO createTask(TaskDTO taskDTO){
         Task task = taskMapper.taskDTOToTask(taskDTO);
         Task savedTask = taskRepository.save(task);
-       return taskMapper.taskToTaskDTO(savedTask);
+        TaskDTO savedTaskDTO = taskMapper.taskToTaskDTO(savedTask);
+        savedTaskDTO.setId(savedTask.getId());
+       return savedTaskDTO;
     }
 
     public TaskDTO getTaskById(Long id){
