@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Min;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -53,6 +54,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/api/tasks/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteTaskById(@PathVariable @Min(1L) Long id) {
         taskService.deleteTaskById(id);
     }

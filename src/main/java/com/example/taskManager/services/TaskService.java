@@ -25,6 +25,7 @@ public class TaskService {
     }
 
     //@Transactional используется для безопасного выполнения операции изменения данных(атомарность)
+    //В случае ошибки - бд вернется в состояние до
     @Transactional
     public TaskDTO createTask(TaskDTO taskDTO){
         Task task = taskMapper.taskDTOToTask(taskDTO);
@@ -37,7 +38,9 @@ public class TaskService {
     public TaskDTO getTaskById(Long id){
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
-        return taskMapper.taskToTaskDTO(task);
+        TaskDTO taskDTO = taskMapper.taskToTaskDTO(task);
+        taskDTO.setId(task.getId());
+        return taskDTO;
     }
 
     public List<TaskDTO> getAllTasks(){
