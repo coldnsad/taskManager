@@ -1,16 +1,20 @@
 package com.example.taskManager.configurations.security;
 
+import com.example.taskManager.jwt.JwtTokenAuthFilter;
 import com.example.taskManager.services.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-
-import static org.springframework.security.config.Customizer.withDefaults;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -18,23 +22,28 @@ import static org.springframework.security.config.Customizer.withDefaults;
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
+    private final JwtTokenAuthFilter jwtTokenAuthFilter;
 
-    public SecurityConfig(CustomUserDetailsService customUserDetailsService) {
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService, JwtTokenAuthFilter jwtTokenAuthFilter) {
         this.customUserDetailsService = customUserDetailsService;
+        this.jwtTokenAuthFilter = jwtTokenAuthFilter;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(AbstractHttpConfigurer::disable)  // Отключить CSRF (для REST API не нужно)
                 .authorizeHttpRequests(auth -> auth //authorizeHttpRequests задаёт правила доступа
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/tasks/**").hasAnyRole("USER", "ADMIN") // USER или ADMIN
                         .anyRequest().authenticated()
                 )
-                .userDetailsService(customUserDetailsService)
-                .httpBasic(withDefaults())
-                //.formLogin(withDefaults())  // Включить стандартную форму авторизации
-                .csrf(csrf -> csrf.disable())  // Отключить CSRF (для REST API не нужно)
-                .headers(headers -> headers.frameOptions(withDefaults()).disable());  // Для доступа к H2 Console
+                //.httpBasic(withDefaults())  // Базовая авторизация
+                //.formLogin(withDefaults())  // Стандартная форма авторизации
+                .addFilterBefore(jwtTokenAuthFilter, UsernamePasswordAuthenticationFilter.class) // JWT-авторизация
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .userDetailsService(customUserDetailsService);
 
         return http.build();
     }
@@ -42,6 +51,11 @@ public class SecurityConfig {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
     //UserDetailService для создания пользователей в RAM

@@ -1,18 +1,21 @@
 package com.example.taskManager.controllers;
 
+import com.example.taskManager.dto.LoginRequestDTO;
 import com.example.taskManager.dto.RegistrationRequestDTO;
+import com.example.taskManager.jwt.JwtTokenProvider;
 import com.example.taskManager.models.Role;
 import com.example.taskManager.models.User;
 import com.example.taskManager.repositories.RoleRepository;
 import com.example.taskManager.repositories.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -21,17 +24,21 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public AuthController(PasswordEncoder passwordEncoder,
                           RoleRepository roleRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository, AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.userRepository = userRepository;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenProvider = jwtTokenProvider;
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> addTask(@RequestBody RegistrationRequestDTO request) {
+    public ResponseEntity<String> signUp(@RequestBody RegistrationRequestDTO request) {
         User newUser = new User();
         newUser.setName(request.getUserName());
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -44,5 +51,16 @@ public class AuthController {
 
         userRepository.save(newUser);
         return ResponseEntity.ok("User registered");
+    }
+
+    @GetMapping("/signin")
+    public ResponseEntity<String> signIn(@RequestBody LoginRequestDTO request) {
+        Authentication auth = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword()));
+        String token = jwtTokenProvider.generateToken(
+                auth.getName(),
+                auth.getAuthorities().stream().collect(Collectors.toList()));
+
+        return ResponseEntity.ok(token);
     }
 }
