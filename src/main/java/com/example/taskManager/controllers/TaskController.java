@@ -16,6 +16,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
+@RequestMapping("/task-api")
 public class TaskController {
 
     private final TaskService taskService;
@@ -26,7 +27,7 @@ public class TaskController {
         this.appName = appName;
     }
 
-    @PostMapping("/api/tasks")
+    @PostMapping("/tasks")
     public ResponseEntity<TaskDTO> addTask(@Valid @RequestBody TaskDTO taskDTO) {
         TaskDTO newTaskDTO = taskService.createTask(taskDTO);
         URI location = ServletUriComponentsBuilder
@@ -37,29 +38,29 @@ public class TaskController {
         return ResponseEntity.created(location).body(newTaskDTO);
     }
 
-    @GetMapping("/api/tasks")
+    @GetMapping("/tasks")
     @ResponseStatus(HttpStatus.OK)
     public List<TaskDTO> getAllTasks() {
         return taskService.getAllTasks();
     }
 
-    @GetMapping("/api/tasks/{id}")
+    @GetMapping("/tasks/{id}")
     public ResponseEntity<TaskDTO> getTaskById(@PathVariable @Min(1L) Long id) {
         return ResponseEntity.ok(taskService.getTaskById(id));
     }
 
-    @PostMapping("/api/tasks/{id}")
+    @PostMapping("/tasks/{id}")
     public ResponseEntity<TaskDTO> updateTask(@PathVariable @Min(1L) Long id, @Valid @RequestBody TaskDTO taskDTO) {
         return ResponseEntity.ok(taskService.updateTask(id, taskDTO));
     }
 
-    @DeleteMapping("/api/tasks/{id}")
+    @DeleteMapping("/tasks/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteTaskById(@PathVariable @Min(1L) Long id) {
         taskService.deleteTaskById(id);
     }
 
-    @GetMapping("/api/tasks/filter")
+    @GetMapping("/tasks/filter")
     public ResponseEntity<List<TaskDTO>> getAllTasksByStatus(@RequestParam Boolean completed) {
         if(completed != null){
             List<TaskDTO> taskDTOs = taskService.getTasksByCompletionStatus(completed);
@@ -68,7 +69,7 @@ public class TaskController {
         return ResponseEntity.ok(taskService.getAllTasks());
     }
 
-    @GetMapping("/api/tasks/search")
+    @GetMapping("/tasks/search")
     public ResponseEntity<List<TaskDTO>> getAllTasksByKeyword(@RequestParam String keyword) {
         List<TaskDTO> taskDTOs = taskService.getTasksByTitleKeyword(keyword);
         return ResponseEntity.ok(taskDTOs);

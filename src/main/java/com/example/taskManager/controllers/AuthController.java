@@ -18,7 +18,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/task-api/auth")
 public class AuthController {
 
     private final PasswordEncoder passwordEncoder;

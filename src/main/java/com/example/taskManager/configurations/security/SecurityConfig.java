@@ -34,8 +34,8 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)  // Отключить CSRF (для REST API не нужно)
                 .authorizeHttpRequests(auth -> auth //authorizeHttpRequests задаёт правила доступа
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/tasks/**").hasAnyRole("USER", "ADMIN") // USER или ADMIN
+                        .requestMatchers("/task-api/auth/**").permitAll()
+                        .requestMatchers("/task-api/tasks/**").hasAnyRole("USER", "ADMIN") // USER или ADMIN
                         .anyRequest().authenticated()
                 )
                 //.httpBasic(withDefaults())  // Базовая авторизация
