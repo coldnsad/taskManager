@@ -1,11 +1,15 @@
 package com.example.taskManager.services;
 
+import com.example.taskManager.dto.CustomerDTO;
 import com.example.taskManager.dto.TaskDTO;
+import com.example.taskManager.exceptions.CustomerNotFoundException;
 import com.example.taskManager.exceptions.TaskNotFoundException;
+import com.example.taskManager.feign.CustomerProfileClient;
 import com.example.taskManager.mappers.TaskMapper;
 import com.example.taskManager.models.Task;
 import com.example.taskManager.repositories.TaskRepository;
 import jakarta.annotation.PostConstruct;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,12 +20,15 @@ import java.util.List;
 public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskMapper taskMapper;
-    private Clock clock;
+    private final CustomerProfileClient customerProfileClient;
 
-    public TaskService(Clock clock, TaskRepository taskRepository, TaskMapper taskMapper) {
-        this.clock = clock;
+    public TaskService(Clock clock,
+                       TaskRepository taskRepository,
+                       TaskMapper taskMapper,
+                       CustomerProfileClient customerProfileClient) {
         this.taskRepository = taskRepository;
         this.taskMapper = taskMapper;
+        this.customerProfileClient = customerProfileClient;
     }
 
     //@Transactional используется для безопасного выполнения операции изменения данных(атомарность)
@@ -36,9 +43,20 @@ public class TaskService {
     }
 
     public TaskDTO getTaskById(Long id){
+        TaskDTO taskDTO;
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new TaskNotFoundException(id));
-        TaskDTO taskDTO = taskMapper.taskToTaskDTO(task);
+        if(task.getCustomerId() != null) {
+            ResponseEntity<CustomerDTO> response = customerProfileClient.getCustomerById(task.getCustomerId());
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                CustomerDTO customerDTO = response.getBody();
+                taskDTO = taskMapper.toDTOWithCustomer(task, customerDTO);
+            } else {
+                taskDTO = taskMapper.taskToTaskDTO(task);
+            }
+        }else{
+            taskDTO = taskMapper.taskToTaskDTO(task);
+        }
         taskDTO.setId(task.getId());
         return taskDTO;
     }
@@ -77,6 +95,5 @@ public class TaskService {
     //Вызов метода происходит после полной инициализации бина
     @PostConstruct
     public void init() {
-        //System.out.println("clock.getZone(): " + clock.getZone());
     }
 }

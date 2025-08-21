@@ -34,6 +34,13 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)  // Отключить CSRF (для REST API не нужно)
                 .authorizeHttpRequests(auth -> auth //authorizeHttpRequests задаёт правила доступа
+                        .requestMatchers(
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
                         .requestMatchers("/task-api/auth/**").permitAll()
                         .requestMatchers("/task-api/tasks/**").hasAnyRole("USER", "ADMIN") // USER или ADMIN
                         .anyRequest().authenticated()

@@ -23,5 +23,6 @@ public class Task {
     private Boolean completed;
     @CreationTimestamp
     private Date creationDate;
+    private Long customerId;
 
 }
