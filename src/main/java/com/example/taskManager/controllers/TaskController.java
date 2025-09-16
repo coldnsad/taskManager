@@ -1,11 +1,14 @@
 package com.example.taskManager.controllers;
 
+import com.example.taskManager.dto.ListTaskFilterDTO;
 import com.example.taskManager.dto.TaskDTO;
+import com.example.taskManager.dto.TaskFilteredDTO;
 import com.example.taskManager.services.TaskService;
 import jakarta.annotation.PostConstruct;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
-import org.springframework.beans.factory.annotation.Value;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -13,19 +16,13 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
-import java.util.List;
 
 @RestController
 @RequestMapping("/task-api")
+@AllArgsConstructor
 public class TaskController {
 
     private final TaskService taskService;
-    private String appName;
-
-    public TaskController(TaskService taskService, @Value("${app.name}") String appName) {
-        this.taskService = taskService;
-        this.appName = appName;
-    }
 
     @PostMapping("/tasks")
     public ResponseEntity<TaskDTO> addTask(@Valid @RequestBody TaskDTO taskDTO) {
@@ -38,10 +35,20 @@ public class TaskController {
         return ResponseEntity.created(location).body(newTaskDTO);
     }
 
+    /**
+     *
+     * @param pageable
+     * При запросе для пагинации указывать следующие параметры запроса
+     * page(default = 0) - номер страницы
+     * size(default = 20) - количество элементов на странице
+     * sort - поле и направление сортировки
+     * Пример запроса:
+     * GET /task-api/tasks?page=0&size=1&sort=completed,desc
+     */
     @GetMapping("/tasks")
     @ResponseStatus(HttpStatus.OK)
-    public List<TaskDTO> getAllTasks() {
-        return taskService.getAllTasks();
+    public TaskFilteredDTO getAllTasks(@ModelAttribute ListTaskFilterDTO filters, Pageable pageable) {
+        return taskService.getAllTasks(filters, pageable);
     }
 
     @GetMapping("/tasks/{id}")
@@ -58,21 +65,6 @@ public class TaskController {
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteTaskById(@PathVariable @Min(1L) Long id) {
         taskService.deleteTaskById(id);
-    }
-
-    @GetMapping("/tasks/filter")
-    public ResponseEntity<List<TaskDTO>> getAllTasksByStatus(@RequestParam Boolean completed) {
-        if(completed != null){
-            List<TaskDTO> taskDTOs = taskService.getTasksByCompletionStatus(completed);
-            return ResponseEntity.ok(taskDTOs);
-        }
-        return ResponseEntity.ok(taskService.getAllTasks());
-    }
-
-    @GetMapping("/tasks/search")
-    public ResponseEntity<List<TaskDTO>> getAllTasksByKeyword(@RequestParam String keyword) {
-        List<TaskDTO> taskDTOs = taskService.getTasksByTitleKeyword(keyword);
-        return ResponseEntity.ok(taskDTOs);
     }
 
     @PostConstruct

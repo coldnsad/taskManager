@@ -1,7 +1,7 @@
 package com.example.taskManager;
 
 import com.example.taskManager.exceptions.TaskNotFoundException;
-import com.example.taskManager.services.TaskService;
+import com.example.taskManager.services.TaskServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TaskManagerApplicationTests {
 
     @Autowired
-    private TaskService taskService;
+    private TaskServiceImpl taskServiceImpl;
 
 	@Test
 	void contextLoads() {
@@ -24,7 +24,7 @@ class TaskManagerApplicationTests {
 
 		// Проверяем, что выбросится нужное исключение
 		assertThrows(TaskNotFoundException.class,
-				() -> taskService.getTaskById(nonExistentId));
+				() -> taskServiceImpl.getTaskById(nonExistentId));
 	}
 
 }
