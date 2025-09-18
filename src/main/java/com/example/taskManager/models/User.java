@@ -2,8 +2,10 @@ package com.example.taskManager.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,16 +13,17 @@ import java.util.Set;
 @Entity
 @Getter
 @Setter
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "custom_user")
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    Long id;
     @NotBlank(message = "Title is blank")
     @Column(unique = true, nullable = false)
-    private String name;
+    String name;
     @Column(nullable = false)
-    private String password;
+    String password;
 
     // Роли загружаются сразу, вместе с пользователем(FetchType.EAGER)
     @ManyToMany(fetch = FetchType.EAGER)
@@ -29,5 +32,5 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles = new HashSet<>();
+    Set<Role> roles = new HashSet<>();
 }

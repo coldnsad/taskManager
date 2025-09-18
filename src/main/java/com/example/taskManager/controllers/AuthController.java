@@ -7,6 +7,7 @@ import com.example.taskManager.models.Role;
 import com.example.taskManager.models.User;
 import com.example.taskManager.repositories.RoleRepository;
 import com.example.taskManager.repositories.UserRepository;
+import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,10 +15,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @RestController
+@AllArgsConstructor
 @RequestMapping("/task-api/auth")
 public class AuthController {
 
@@ -27,23 +29,13 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
 
-    public AuthController(PasswordEncoder passwordEncoder,
-                          RoleRepository roleRepository,
-                          UserRepository userRepository, AuthenticationManager authenticationManager, JwtTokenProvider jwtTokenProvider) {
-        this.passwordEncoder = passwordEncoder;
-        this.roleRepository = roleRepository;
-        this.userRepository = userRepository;
-        this.authenticationManager = authenticationManager;
-        this.jwtTokenProvider = jwtTokenProvider;
-    }
-
     @PostMapping("/signup")
     public ResponseEntity<String> signUp(@RequestBody RegistrationRequestDTO request) {
         User newUser = new User();
         newUser.setName(request.getUserName());
         newUser.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        if(!Objects.isNull(request.getRoleName())){
+        if (!Objects.isNull(request.getRoleName())) {
             Role role = roleRepository.findByName(request.getRoleName())
                     .orElseThrow(() -> new RuntimeException("Role not found"));
             newUser.getRoles().add(role);
@@ -59,7 +51,7 @@ public class AuthController {
                 new UsernamePasswordAuthenticationToken(request.getUserName(), request.getPassword()));
         String token = jwtTokenProvider.generateToken(
                 auth.getName(),
-                auth.getAuthorities().stream().collect(Collectors.toList()));
+                new ArrayList<>(auth.getAuthorities()));
 
         return ResponseEntity.ok(token);
     }
